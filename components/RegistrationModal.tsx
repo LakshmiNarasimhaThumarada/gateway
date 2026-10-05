@@ -141,19 +141,19 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({ isOpen, on
             </div>
           )}
 
-          {/* Full Name */}
+          {/* Email / Gmail Address */}
           <div>
             <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-              Full Name <span className="text-red-500">*</span>
+              Gmail / Email Address <span className="text-red-500">*</span>
             </label>
             <input
-              type="text"
-              placeholder="e.g. Rajesh Kumar"
-              {...register("fullName")}
+              type="email"
+              placeholder="e.g. yourname@gmail.com"
+              {...register("email")}
               className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-lg text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white"
             />
-            {errors.fullName && (
-              <p className="text-red-500 text-xs mt-1">{errors.fullName.message}</p>
+            {errors.email && (
+              <p className="text-red-500 text-xs mt-1">{errors.email.message}</p>
             )}
           </div>
 
@@ -170,108 +170,6 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({ isOpen, on
             />
             {errors.phone && (
               <p className="text-red-500 text-xs mt-1">{errors.phone.message}</p>
-            )}
-          </div>
-
-          {/* Email */}
-          <div>
-            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-              Email Address <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="email"
-              placeholder="e.g. rajesh@company.com"
-              {...register("email")}
-              className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-lg text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white"
-            />
-            {errors.email && (
-              <p className="text-red-500 text-xs mt-1">{errors.email.message}</p>
-            )}
-          </div>
-
-          {/* Business Type & Company */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                Business Type <span className="text-red-500">*</span>
-              </label>
-              <select
-                {...register("businessType")}
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-lg text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white"
-              >
-                <option value="">Select your profile...</option>
-                {businessTypeOptions.map((opt) => (
-                  <option key={opt} value={opt}>
-                    {opt}
-                  </option>
-                ))}
-              </select>
-              {errors.businessType && (
-                <p className="text-red-500 text-xs mt-1">{errors.businessType.message}</p>
-              )}
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                Company / Business Name
-              </label>
-              <input
-                type="text"
-                placeholder="e.g. Kumar Exports India"
-                {...register("businessName")}
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-lg text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white"
-              />
-            </div>
-          </div>
-
-          {/* Location: City & State */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                City <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                placeholder="e.g. Guntur / Surat"
-                {...register("city")}
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-lg text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white"
-              />
-              {errors.city && (
-                <p className="text-red-500 text-xs mt-1">{errors.city.message}</p>
-              )}
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                State / Province
-              </label>
-              <input
-                type="text"
-                placeholder="e.g. Andhra Pradesh"
-                {...register("state")}
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-lg text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white"
-              />
-            </div>
-          </div>
-
-          {/* Interested In */}
-          <div>
-            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-              Interested In <span className="text-red-500">*</span>
-            </label>
-            <select
-              {...register("interestedIn")}
-              className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-lg text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white"
-            >
-              <option value="">Select main interest...</option>
-              {interestedInOptions.map((opt) => (
-                <option key={opt} value={opt}>
-                  {opt}
-                </option>
-              ))}
-            </select>
-            {errors.interestedIn && (
-              <p className="text-red-500 text-xs mt-1">{errors.interestedIn.message}</p>
             )}
           </div>
 

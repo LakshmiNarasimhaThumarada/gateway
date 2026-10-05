@@ -36,16 +36,16 @@ export async function POST(req: NextRequest) {
     // Create Customer record in database
     const customer = await dbStore.createCustomer({
       registrationId,
-      fullName: data.fullName,
+      fullName: data.fullName || data.email.split("@")[0] || "Member",
       phone: data.phone,
       whatsappNumber: data.whatsappNumber || data.phone,
       email: data.email,
-      businessType: data.businessType,
+      businessType: data.businessType || "Exporter",
       businessName: data.businessName || null,
-      city: data.city,
+      city: data.city || "India",
       state: data.state || null,
       country: data.country || "India",
-      interestedIn: data.interestedIn,
+      interestedIn: data.interestedIn || "Business Networking",
       source: sourceString,
       status: "PENDING_PAYMENT",
     });

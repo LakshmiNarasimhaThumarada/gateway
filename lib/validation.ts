@@ -25,28 +25,20 @@ export const interestedInOptions = [
 ] as const;
 
 export const registrationSchema = z.object({
-  fullName: z
-    .string()
-    .min(2, "Full name must be at least 2 characters")
-    .max(100, "Full name must be less than 100 characters"),
+  fullName: z.string().optional(),
   phone: z
     .string()
     .regex(indianPhoneRegex, "Enter a valid 10-digit Indian mobile number"),
   whatsappNumber: z
     .string()
-    .regex(indianPhoneRegex, "Enter a valid 10-digit WhatsApp number")
     .optional(),
-  email: z.string().email("Enter a valid email address"),
-  businessType: z.enum(businessTypeOptions, {
-    errorMap: () => ({ message: "Please select a valid business type" }),
-  }),
+  email: z.string().email("Enter a valid Gmail / Email address"),
+  businessType: z.string().optional().default("Exporter"),
   businessName: z.string().optional(),
-  city: z.string().min(2, "City is required"),
+  city: z.string().optional().default("India"),
   state: z.string().optional(),
   country: z.string().default("India"),
-  interestedIn: z.enum(interestedInOptions, {
-    errorMap: () => ({ message: "Please select what you are interested in" }),
-  }),
+  interestedIn: z.string().optional().default("Business Networking"),
   howDidYouHear: z.string().optional(),
   agreeTerms: z.literal(true, {
     errorMap: () => ({ message: "You must accept the Terms & Conditions and Privacy Policy" }),
