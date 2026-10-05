@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
       registrationId,
       fullName: data.fullName,
       phone: data.phone,
-      whatsappNumber: data.whatsappNumber,
+      whatsappNumber: data.whatsappNumber || data.phone,
       email: data.email,
       businessType: data.businessType,
       businessName: data.businessName || null,

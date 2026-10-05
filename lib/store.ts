@@ -55,69 +55,6 @@ const memoryStore = {
   whatsappMessages: new Map<string, WhatsAppMessageRecord>(),
 };
 
-// Seed initial mock data in memory for dev preview
-if (memoryStore.customers.size === 0) {
-  const now = new Date();
-  const demoCustomers: CustomerRecord[] = [
-    {
-      id: "cust_demo_1",
-      registrationId: "REG-20261006-000101",
-      fullName: "Rajesh Kumar",
-      phone: "+919876543210",
-      whatsappNumber: "+919876543210",
-      email: "rajesh.exporter@example.com",
-      businessType: "Exporter",
-      businessName: "Kumar Spices & Agri Exports",
-      city: "Guntur",
-      state: "Andhra Pradesh",
-      country: "India",
-      interestedIn: "Finding Buyers",
-      source: "source:instagram | campaign:export_import_v1",
-      status: "GROUP_ACCESS_SENT",
-      createdAt: new Date(now.getTime() - 86400000 * 2),
-      updatedAt: new Date(now.getTime() - 86400000 * 2),
-    },
-    {
-      id: "cust_demo_2",
-      registrationId: "REG-20261006-000102",
-      fullName: "Ananya Sharma",
-      phone: "+919812345678",
-      whatsappNumber: "+919812345678",
-      email: "ananya.textiles@example.com",
-      businessType: "Manufacturer",
-      businessName: "Sharma Garments Pvt Ltd",
-      city: "Surat",
-      state: "Gujarat",
-      country: "India",
-      interestedIn: "Export Opportunities",
-      source: "source:instagram | campaign:reels_ad2",
-      status: "UNDER_REVIEW",
-      createdAt: new Date(now.getTime() - 3600000 * 4),
-      updatedAt: new Date(now.getTime() - 3600000 * 4),
-    },
-    {
-      id: "cust_demo_3",
-      registrationId: "REG-20261006-000103",
-      fullName: "Vikram Patel",
-      phone: "+919988776655",
-      whatsappNumber: "+919988776655",
-      email: "vikram.patel@example.com",
-      businessType: "Importer",
-      businessName: "Patel Global Supplies",
-      city: "Ahmedabad",
-      state: "Gujarat",
-      country: "India",
-      interestedIn: "Finding Suppliers",
-      source: "source:instagram | campaign:story_ad1",
-      status: "APPROVED",
-      createdAt: new Date(now.getTime() - 3600000 * 1),
-      updatedAt: new Date(now.getTime() - 3600000 * 1),
-    },
-  ];
-
-  demoCustomers.forEach((c) => memoryStore.customers.set(c.id, c));
-}
-
 export class DataStore {
   public async createCustomer(data: Omit<CustomerRecord, "id" | "createdAt" | "updatedAt">): Promise<CustomerRecord> {
     const id = `cust_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;

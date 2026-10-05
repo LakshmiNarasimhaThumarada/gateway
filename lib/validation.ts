@@ -34,7 +34,8 @@ export const registrationSchema = z.object({
     .regex(indianPhoneRegex, "Enter a valid 10-digit Indian mobile number"),
   whatsappNumber: z
     .string()
-    .regex(indianPhoneRegex, "Enter a valid 10-digit WhatsApp number"),
+    .regex(indianPhoneRegex, "Enter a valid 10-digit WhatsApp number")
+    .optional(),
   email: z.string().email("Enter a valid email address"),
   businessType: z.enum(businessTypeOptions, {
     errorMap: () => ({ message: "Please select a valid business type" }),

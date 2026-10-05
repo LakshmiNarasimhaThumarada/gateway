@@ -157,49 +157,20 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({ isOpen, on
             )}
           </div>
 
-          {/* Mobile & WhatsApp Numbers */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                Mobile Number (+91) <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="tel"
-                placeholder="e.g. 9876543210"
-                {...register("phone")}
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-lg text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white"
-              />
-              {errors.phone && (
-                <p className="text-red-500 text-xs mt-1">{errors.phone.message}</p>
-              )}
-            </div>
-
-            <div>
-              <div className="flex items-center justify-between mb-1">
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-                  WhatsApp Number <span className="text-red-500">*</span>
-                </label>
-                <label className="flex items-center gap-1 text-[11px] text-slate-500 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={sameAsPhone}
-                    onChange={(e) => setSameAsPhone(e.target.checked)}
-                    className="rounded text-emerald-600 focus:ring-emerald-500"
-                  />
-                  <span>Same</span>
-                </label>
-              </div>
-              <input
-                type="tel"
-                placeholder="e.g. 9876543210"
-                disabled={sameAsPhone}
-                {...register("whatsappNumber")}
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-lg text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white disabled:opacity-75"
-              />
-              {errors.whatsappNumber && (
-                <p className="text-red-500 text-xs mt-1">{errors.whatsappNumber.message}</p>
-              )}
-            </div>
+          {/* Mobile / WhatsApp Number */}
+          <div>
+            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+              Mobile / WhatsApp Number (+91) <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="tel"
+              placeholder="e.g. 9876543210"
+              {...register("phone")}
+              className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-lg text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white"
+            />
+            {errors.phone && (
+              <p className="text-red-500 text-xs mt-1">{errors.phone.message}</p>
+            )}
           </div>
 
           {/* Email */}
