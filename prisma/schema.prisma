@@ -1,0 +1,126 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum CustomerStatus {
+  PENDING_PAYMENT
+  PAYMENT_SUCCESS
+  PAYMENT_FAILED
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+  GROUP_ACCESS_SENT
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
+  CANCELLED
+  REFUNDED
+}
+
+enum WhatsAppMessageType {
+  PAYMENT_CONFIRMATION
+  VERIFICATION_PENDING
+  APPROVED
+  REJECTED
+  GROUP_ACCESS
+}
+
+model Customer {
+  id               String          @id @default(cuid())
+  registrationId   String          @unique
+  fullName         String
+  phone            String
+  whatsappNumber   String
+  email            String
+  businessType     String
+  businessName     String?
+  city             String
+  state            String?
+  country          String          @default("India")
+  interestedIn     String
+  source           String?         // UTM string/JSON
+  rejectionReason  String?
+  status           CustomerStatus  @default(PENDING_PAYMENT)
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+
+  payments         Payment[]
+  whatsappMessages WhatsAppMessage[]
+  auditLogs        AuditLog[]
+
+  @@index([phone])
+  @@index([email])
+  @@index([status])
+  @@map("customers")
+}
+
+model Payment {
+  id              String        @id @default(cuid())
+  customerId      String
+  customer        Customer      @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  orderId         String        @unique
+  paymentId       String?
+  amount          Int           @default(19900) // ₹199 in paise
+  currency        String        @default("INR")
+  gateway         String        @default("EASEBUZZ")
+  status          PaymentStatus @default(PENDING)
+  gatewayResponse String?       // Raw JSON payload string
+  paidAt          DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@index([customerId])
+  @@index([orderId])
+  @@index([status])
+  @@map("payments")
+}
+
+model WhatsAppMessage {
+  id                String              @id @default(cuid())
+  customerId        String
+  customer          Customer            @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  messageType       WhatsAppMessageType
+  recipient         String
+  message           String
+  providerMessageId String?
+  status            String              @default("SENT")
+  sentAt            DateTime            @default(now())
+  createdAt         DateTime            @default(now())
+
+  @@index([customerId])
+  @@map("whatsapp_messages")
+}
+
+model AdminUser {
+  id           String     @id @default(cuid())
+  name         String
+  email        String     @unique
+  passwordHash String
+  role         String     @default("ADMIN")
+  createdAt    DateTime   @default(now())
+
+  auditLogs    AuditLog[]
+
+  @@map("admin_users")
+}
+
+model AuditLog {
+  id          String     @id @default(cuid())
+  adminId     String?
+  admin       AdminUser? @relation(fields: [adminId], references: [id], onDelete: SetNull)
+  customerId  String?
+  customer    Customer?  @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  action      String
+  description String
+  createdAt   DateTime   @default(now())
+
+  @@map("audit_logs")
+}
