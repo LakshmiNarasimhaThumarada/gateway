@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import { Globe2, ShieldCheck } from "lucide-react";
+import { ShieldCheck } from "lucide-react";
 
 interface NavbarProps {
   onOpenRegister: () => void;
@@ -37,10 +37,21 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenRegister }) => {
           <a href="#faq" className="hover:text-emerald-600 transition-colors">
             FAQ
           </a>
+          <Link href="/contact" className="hover:text-emerald-600 transition-colors">
+            Contact Us
+          </Link>
         </nav>
 
         {/* CTA Button */}
         <div className="flex items-center gap-3">
+          {/* Mobile-only Contact Us link */}
+          <Link
+            href="/contact"
+            className="md:hidden text-sm font-medium text-slate-600 hover:text-emerald-600 transition-colors"
+          >
+            Contact
+          </Link>
+
           <div className="hidden lg:flex items-center gap-1.5 text-xs text-slate-500 bg-slate-100 px-3 py-1.5 rounded-full border border-slate-200">
             <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
             <span>Verified Business Network</span>
