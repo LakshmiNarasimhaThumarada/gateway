@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import { MessageCircle, Mail, MapPin } from "lucide-react";
+import { Phone, Mail, User } from "lucide-react";
 
 export const Footer: React.FC = () => {
   return (
@@ -81,18 +81,22 @@ export const Footer: React.FC = () => {
           {/* Col 4: Contact & Support */}
           <div className="space-y-3">
             <h4 className="text-xs font-bold text-white uppercase tracking-wider">Support Contact</h4>
-            <ul className="space-y-2 text-xs text-slate-400">
-              <li className="flex items-center gap-2">
-                <MessageCircle className="w-4 h-4 text-emerald-400 shrink-0" />
-                <span>WhatsApp: +91 98765 43210</span>
+            <ul className="space-y-3 text-xs text-slate-400">
+              <li className="flex items-start gap-2">
+                <User className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                <span className="font-semibold text-slate-300">ABHISHEK CHETTIPALLI</span>
               </li>
               <li className="flex items-center gap-2">
                 <Mail className="w-4 h-4 text-emerald-400 shrink-0" />
-                <span>support@eximpcommunity.com</span>
+                <a href="mailto:abhishekbobby10@gmail.com" className="hover:text-emerald-400 transition-colors break-all">
+                  abhishekbobby10@gmail.com
+                </a>
               </li>
               <li className="flex items-center gap-2">
-                <MapPin className="w-4 h-4 text-emerald-400 shrink-0" />
-                <span>India Trade Facilitation Desk</span>
+                <Phone className="w-4 h-4 text-emerald-400 shrink-0" />
+                <a href="tel:+918205320301" className="hover:text-emerald-400 transition-colors">
+                  +91 82053 20301
+                </a>
               </li>
             </ul>
           </div>
