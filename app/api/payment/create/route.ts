@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { dbStore } from "@/lib/store";
-import { easebuzzService } from "@/lib/easebuzz";
+import { createCashfreeOrder } from "@/lib/cashfree";
 
 export async function POST(req: NextRequest) {
   try {
@@ -23,65 +23,57 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // STRICT SECURITY ENFORCEMENT: Price ₹199 set on backend ONLY
-    const SERVER_ENFORCED_AMOUNT = 199.0;
-    const SERVER_ENFORCED_PAISE = 19900;
+    // ── PRICE ENFORCED ON BACKEND ONLY ─────────────────────────────────────
+    const SERVER_ENFORCED_AMOUNT = 199.0; // ₹199 INR
 
-    // Generate unique Order ID
-    const orderId = `ORD_${registrationId}_${Date.now().toString().slice(-6)}`;
+    // Generate unique Order ID for Cashfree
+    const orderId = `ORD_${registrationId}_${Date.now().toString().slice(-8)}`;
 
     // Save pending payment record in DB
     await dbStore.createPayment({
       customerId: customer.id,
       orderId,
-      amount: SERVER_ENFORCED_PAISE,
+      amount: 19900, // stored in paise
       currency: "INR",
-      gateway: "EASEBUZZ",
+      gateway: "CASHFREE",
       status: "PENDING",
     });
 
     const origin = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-    const surl = `${origin}/api/payment/callback`;
-    const furl = `${origin}/api/payment/callback`;
+    const returnUrl = `${origin}/payment/success`;
 
-    // Initiate payment via Easebuzz gateway service
-    const gatewayResult = await easebuzzService.initiatePayment({
-      txnid: orderId,
+    // ── Create Cashfree Order ───────────────────────────────────────────────
+    const result = await createCashfreeOrder({
+      orderId,
       amount: SERVER_ENFORCED_AMOUNT,
-      productinfo: "Export-Import Business Community Access",
-      firstname: customer.fullName,
-      email: customer.email,
-      phone: customer.whatsappNumber || customer.phone,
-      surl,
-      furl,
-      udf1: customer.registrationId,
-      udf2: customer.id,
+      customerEmail: customer.email,
+      customerPhone: customer.whatsappNumber || customer.phone,
+      customerId: customer.registrationId,
+      returnUrl,
+      orderNote: "Export-Import Business Community Access ₹199",
     });
 
-    if (gatewayResult.isMock) {
-      return NextResponse.json({
-        success: true,
-        isMock: true,
-        payment_url: gatewayResult.payment_url,
-        message: "Development mode: Redirecting to mock Easebuzz payment checkout",
-      });
+    if (!result.success || !result.paymentSessionId) {
+      console.error("Cashfree order creation failed:", result.error);
+      return NextResponse.json(
+        {
+          success: false,
+          message: result.error || "Payment initiation failed. Please try again.",
+        },
+        { status: 502 }
+      );
     }
 
-    if (gatewayResult.status === 1 && gatewayResult.data) {
-      const checkoutUrl = `${easebuzzService.getBaseUrl()}pay/${gatewayResult.data}`;
-      return NextResponse.json({
-        success: true,
-        payment_url: checkoutUrl,
-        access_key: gatewayResult.data,
-      });
-    }
-
+    // Return payment_session_id → used by Cashfree JS SDK on frontend to open checkout
     return NextResponse.json({
       success: true,
-      payment_url: gatewayResult.payment_url || `${origin}/api/payment/mock-checkout?txnid=${orderId}&regId=${customer.registrationId}`,
+      payment_session_id: result.paymentSessionId,
+      order_id: result.orderId,
+      registration_id: customer.registrationId,
     });
   } catch (error: unknown) {
-    const msg = error instanceof Error ? error.message : "Failed to create payment transaction";
+    const msg =
+      error instanceof Error ? error.message : "Failed to create payment transaction";
     console.error("Payment create error:", error);
     return NextResponse.json(
       { success: false, message: msg },

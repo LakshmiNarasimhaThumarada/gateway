@@ -5,8 +5,8 @@ import { useRouter } from "next/navigation";
 import { Lock, Mail, Loader2, ShieldCheck } from "lucide-react";
 
 export default function AdminLoginPage() {
-  const [email, setEmail] = useState("admin@eximpcommunity.com");
-  const [password, setPassword] = useState("admin123");
+  const [email, setEmail] = useState("admin@eximnetwork.in");
+  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
@@ -111,7 +111,7 @@ export default function AdminLoginPage() {
         </form>
 
         <div className="mt-6 pt-4 border-t border-slate-700 text-center text-[11px] text-slate-400">
-          Default Dev Credentials: <span className="text-emerald-400 font-mono">admin@eximpcommunity.com / admin123</span>
+          Admin Login: <span className="text-emerald-400 font-mono">admin@eximnetwork.in</span>
         </div>
 
       </div>

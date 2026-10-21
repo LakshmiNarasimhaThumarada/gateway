@@ -7,9 +7,11 @@ import { X, Lock, Loader2, CheckCircle2 } from "lucide-react";
 import {
   registrationSchema,
   RegistrationFormData,
-  businessTypeOptions,
-  interestedInOptions,
 } from "@/lib/validation";
+
+// Cashfree hosted payment page URL
+const CASHFREE_PAYMENT_URL =
+  "https://payments.cashfree.com/forms/import-export-community";
 
 interface RegistrationModalProps {
   isOpen: boolean;
@@ -63,38 +65,20 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({ isOpen, on
     setErrorMessage(null);
 
     try {
-      // Step 1: Submit Registration details to backend API
-      const regRes = await fetch("/api/registration", {
+      // Step 1: Save registration to database
+      const res = await fetch("/api/registration", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
 
-      const regJson = await regRes.json();
-      if (!regRes.ok || !regJson.success) {
-        throw new Error(regJson.message || "Registration failed. Please check your details.");
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        throw new Error(json.message || "Registration failed. Please try again.");
       }
 
-      const { registrationId } = regJson.data;
-
-      // Step 2: Create Payment Order on backend (Amount strictly ₹199 set on server)
-      const payRes = await fetch("/api/payment/create", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ registrationId }),
-      });
-
-      const payJson = await payRes.json();
-      if (!payRes.ok || !payJson.success) {
-        throw new Error(payJson.message || "Failed to initialize payment gateway.");
-      }
-
-      // Step 3: Redirect to Easebuzz checkout URL or mock payment URL
-      if (payJson.payment_url) {
-        window.location.href = payJson.payment_url;
-      } else {
-        throw new Error("Payment gateway checkout URL was not returned.");
-      }
+      // Step 2: Redirect to Cashfree hosted payment page
+      window.location.href = CASHFREE_PAYMENT_URL;
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "An unexpected error occurred.";
       setErrorMessage(msg);
@@ -191,7 +175,7 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({ isOpen, on
           </div>
 
           {/* Submit Action */}
-          <div className="pt-4">
+          <div className="pt-4 space-y-3">
             <button
               type="submit"
               disabled={isSubmitting}
@@ -200,7 +184,7 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({ isOpen, on
               {isSubmitting ? (
                 <>
                   <Loader2 className="w-5 h-5 animate-spin" />
-                  <span>Processing Order...</span>
+                  <span>Saving & Redirecting to Payment...</span>
                 </>
               ) : (
                 <>
@@ -209,8 +193,39 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({ isOpen, on
                 </>
               )}
             </button>
-            <p className="text-[11px] text-slate-500 text-center mt-2">
-              🔒 Encrypted server verification via Easebuzz Payment Gateway
+
+            {/* Cashfree Payment Badge */}
+            <div className="flex justify-center">
+              <a
+                href={CASHFREE_PAYMENT_URL}
+                target="_parent"
+                className="inline-flex items-center gap-2.5 bg-black text-white px-4 py-2.5 rounded-2xl border border-slate-700 hover:bg-slate-800 transition-colors no-underline"
+                onClick={(e) => {
+                  // Prevent direct link if form not submitted
+                  e.preventDefault();
+                }}
+              >
+                <img
+                  src="https://cashfreelogo.cashfree.com/assets_images/cfbrand/cf_logo.svg"
+                  alt="Cashfree"
+                  className="w-10 h-10"
+                />
+                <div className="flex flex-col items-center">
+                  <span className="text-sm font-medium">Pay Now</span>
+                  <span className="text-[10px] text-slate-300 flex items-center gap-1">
+                    Powered By Cashfree
+                    <img
+                      src="https://cashfreelogo.cashfree.com/assets_images/cfbrand/cf_logo.svg"
+                      alt=""
+                      className="w-4 h-4 inline-block align-middle"
+                    />
+                  </span>
+                </div>
+              </a>
+            </div>
+
+            <p className="text-[11px] text-slate-500 text-center">
+              🔒 Secured & verified by Cashfree Payment Gateway
             </p>
           </div>
         </form>

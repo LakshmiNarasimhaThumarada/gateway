@@ -1,43 +1,52 @@
 import { NextRequest, NextResponse } from "next/server";
-import { easebuzzService } from "@/lib/easebuzz";
 import { dbStore } from "@/lib/store";
 import { whatsAppService } from "@/lib/whatsapp";
+import { getCashfreeOrderStatus } from "@/lib/cashfree";
 
-async function handlePaymentCallback(data: Record<string, string>, req: NextRequest) {
-  const status = data.status || "";
-  const orderId = data.txnid || "";
-  const registrationId = data.udf1 || "";
-  const paymentId = data.easepayid || data.mihpayid || `PAY_${Date.now()}`;
+// ─────────────────────────────────────────────────────────────────────────────
+// Cashfree calls this webhook URL after payment is completed.
+// Also handles the return_url GET redirect after customer finishes payment.
+// ─────────────────────────────────────────────────────────────────────────────
 
-  // Step 1: Server-side SHA-512 signature validation
-  const isValidSignature = easebuzzService.verifyResponseHash(data);
-  if (!isValidSignature && data.isMock !== "true") {
-    console.error("Invalid Easebuzz payment signature callback detected!", data);
-    return NextResponse.redirect(new URL("/payment/failed?reason=signature_invalid", req.url));
-  }
-
+async function handleSuccess(orderId: string, req: NextRequest) {
   const origin = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
-  // Step 2: Handle Successful Payment
-  if (status === "success" || data.isMock === "true") {
-    // Update Payment record
-    await dbStore.updatePaymentStatus(orderId, "SUCCESS", JSON.stringify(data), paymentId);
+  // Verify the order status with Cashfree server-side (never trust client data)
+  const statusResult = await getCashfreeOrderStatus(orderId);
 
-    // Update Customer Status to UNDER_REVIEW
-    if (registrationId) {
-      const customer = await dbStore.getCustomerByRegId(registrationId);
-      if (customer) {
-        await dbStore.updateCustomerStatus(customer.id, "UNDER_REVIEW");
+  if (!statusResult.success || statusResult.status !== "PAID") {
+    console.warn("Cashfree order not PAID:", orderId, statusResult);
+    await dbStore.updatePaymentStatus(orderId, "FAILED", JSON.stringify(statusResult), "");
+    return NextResponse.redirect(new URL(`/payment/failed?orderId=${orderId}`, origin));
+  }
 
-        // Step 3: Trigger Automatic WhatsApp Payment Confirmation Message
+  // Update payment record to SUCCESS
+  await dbStore.updatePaymentStatus(
+    orderId,
+    "SUCCESS",
+    JSON.stringify(statusResult.rawData),
+    statusResult.cfPaymentId || ""
+  );
+
+  // Find customer by orderId (extract registrationId from orderId format: ORD_{regId}_{ts})
+  const parts = orderId.split("_");
+  const registrationId = parts.length >= 2 ? parts[1] : "";
+
+  if (registrationId) {
+    const customer = await dbStore.getCustomerByRegId(registrationId);
+    if (customer) {
+      // Move customer status → UNDER_REVIEW (waiting for admin approval)
+      await dbStore.updateCustomerStatus(customer.id, "UNDER_REVIEW");
+
+      // Trigger WhatsApp confirmation message
+      try {
         const waResult = await whatsAppService.sendMessage({
           recipient: customer.whatsappNumber || customer.phone,
           templateType: "PAYMENT_CONFIRMATION",
-          customerName: customer.fullName,
+          customerName: customer.fullName || "Member",
           registrationId: customer.registrationId,
         });
 
-        // Log WhatsApp message record in DB
         await dbStore.logWhatsAppMessage({
           customerId: customer.id,
           messageType: "PAYMENT_CONFIRMATION",
@@ -46,52 +55,51 @@ async function handlePaymentCallback(data: Record<string, string>, req: NextRequ
           providerMessageId: waResult.providerMessageId || null,
           status: waResult.success ? "SENT" : "FAILED",
         });
+      } catch (waErr) {
+        console.error("WhatsApp notification failed (non-critical):", waErr);
       }
     }
-
-    // Step 4: Redirect to Payment Success Page
-    return NextResponse.redirect(new URL(`/payment/success?regId=${registrationId}&orderId=${orderId}`, origin));
   }
 
-  // Step 5: Handle Failed or Cancelled Payment
-  await dbStore.updatePaymentStatus(orderId, "FAILED", JSON.stringify(data), paymentId);
-  if (registrationId) {
-    const customer = await dbStore.getCustomerByRegId(registrationId);
-    if (customer) {
-      await dbStore.updateCustomerStatus(customer.id, "PAYMENT_FAILED");
-    }
-  }
-
-  return NextResponse.redirect(new URL(`/payment/failed?regId=${registrationId}`, origin));
+  return NextResponse.redirect(
+    new URL(`/payment/success?orderId=${orderId}&regId=${registrationId}`, origin)
+  );
 }
 
-export async function POST(req: NextRequest) {
-  try {
-    const contentType = req.headers.get("content-type") || "";
-    let data: Record<string, string> = {};
-
-    if (contentType.includes("application/x-www-form-urlencoded")) {
-      const formData = await req.formData();
-      formData.forEach((value, key) => {
-        data[key] = value.toString();
-      });
-    } else {
-      data = await req.json();
-    }
-
-    return await handlePaymentCallback(data, req);
-  } catch (error) {
-    console.error("Payment callback exception:", error);
-    const origin = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-    return NextResponse.redirect(new URL("/payment/failed", origin));
-  }
-}
-
+// ─── GET: Cashfree return_url redirect after customer pays ───────────────────
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
-  const data: Record<string, string> = {};
-  searchParams.forEach((val, key) => {
-    data[key] = val;
-  });
-  return await handlePaymentCallback(data, req);
+  const orderId = searchParams.get("order_id") || "";
+
+  if (!orderId) {
+    const origin = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+    return NextResponse.redirect(new URL("/payment/failed?reason=missing_order", origin));
+  }
+
+  return handleSuccess(orderId, req);
+}
+
+// ─── POST: Cashfree server-to-server webhook ─────────────────────────────────
+export async function POST(req: NextRequest) {
+  try {
+    const body = await req.json();
+    const orderId: string = body?.data?.order?.order_id || body?.order_id || "";
+
+    if (!orderId) {
+      return NextResponse.json({ success: false, message: "Missing order_id" }, { status: 400 });
+    }
+
+    // Only act on PAYMENT_SUCCESS events
+    const eventType: string = body?.type || "";
+    if (eventType && eventType !== "PAYMENT_SUCCESS_WEBHOOK") {
+      // Acknowledge other events without processing
+      return NextResponse.json({ success: true, message: "Event acknowledged" });
+    }
+
+    await handleSuccess(orderId, req);
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("Cashfree webhook error:", error);
+    return NextResponse.json({ success: false }, { status: 500 });
+  }
 }

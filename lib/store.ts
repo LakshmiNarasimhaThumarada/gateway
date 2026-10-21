@@ -85,8 +85,10 @@ export class DataStore {
           status: customer.status,
         },
       });
+      console.log("[DB] Customer created in Prisma DB:", created.registrationId);
       return created as unknown as CustomerRecord;
-    } catch {
+    } catch (err) {
+      console.error("[DB] Prisma createCustomer FAILED, using in-memory fallback. Error:", err);
       // Fallback to in-memory store
       memoryStore.customers.set(id, customer);
       return customer;
@@ -310,22 +312,27 @@ export class DataStore {
   }
 
   public async verifyAdminCredentials(email: string, pass: string): Promise<boolean> {
-    const adminEmail = process.env.ADMIN_EMAIL || "admin@eximpcommunity.com";
+    const adminEmail = process.env.ADMIN_EMAIL || "admin@eximnetwork.in";
     if (email.toLowerCase() !== adminEmail.toLowerCase()) return false;
 
-    // Check environment password or default hash
-    const adminHash =
-      process.env.ADMIN_PASSWORD_HASH ||
-      "$2a$10$R9h/cIPz0gi.UrNNnR5LpOeB19Y5S8rL.y761Jj7N2yQOqG.Qy4CS"; // 'admin123'
-    
-    // In dev mode, also allow 'admin123' directly
+    // Check plain-text password from env first (works without bcrypt hash)
+    const adminPassword = process.env.ADMIN_PASSWORD;
+    if (adminPassword && pass === adminPassword) return true;
+
+    // Fallback: allow legacy dev password
     if (pass === "admin123") return true;
 
-    try {
-      return await bcrypt.compare(pass, adminHash);
-    } catch {
-      return false;
+    // Fallback: check bcrypt hash if set
+    const adminHash = process.env.ADMIN_PASSWORD_HASH;
+    if (adminHash) {
+      try {
+        return await bcrypt.compare(pass, adminHash);
+      } catch {
+        return false;
+      }
     }
+
+    return false;
   }
 }
 

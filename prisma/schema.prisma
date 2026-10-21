@@ -1,5 +1,5 @@
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
@@ -7,50 +7,24 @@ generator client {
   provider = "prisma-client-js"
 }
 
-enum CustomerStatus {
-  PENDING_PAYMENT
-  PAYMENT_SUCCESS
-  PAYMENT_FAILED
-  UNDER_REVIEW
-  APPROVED
-  REJECTED
-  GROUP_ACCESS_SENT
-}
-
-enum PaymentStatus {
-  PENDING
-  SUCCESS
-  FAILED
-  CANCELLED
-  REFUNDED
-}
-
-enum WhatsAppMessageType {
-  PAYMENT_CONFIRMATION
-  VERIFICATION_PENDING
-  APPROVED
-  REJECTED
-  GROUP_ACCESS
-}
-
 model Customer {
-  id               String          @id @default(cuid())
-  registrationId   String          @unique
+  id               String   @id @default(cuid())
+  registrationId   String   @unique
   fullName         String
   phone            String
   whatsappNumber   String
   email            String
-  businessType     String
+  businessType     String   @default("Exporter")
   businessName     String?
-  city             String
+  city             String   @default("India")
   state            String?
-  country          String          @default("India")
-  interestedIn     String
-  source           String?         // UTM string/JSON
+  country          String   @default("India")
+  interestedIn     String   @default("Business Networking")
+  source           String?
   rejectionReason  String?
-  status           CustomerStatus  @default(PENDING_PAYMENT)
-  createdAt        DateTime        @default(now())
-  updatedAt        DateTime        @updatedAt
+  status           String   @default("PENDING_PAYMENT")
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
   payments         Payment[]
   whatsappMessages WhatsAppMessage[]
@@ -63,19 +37,19 @@ model Customer {
 }
 
 model Payment {
-  id              String        @id @default(cuid())
+  id              String   @id @default(cuid())
   customerId      String
-  customer        Customer      @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  orderId         String        @unique
+  customer        Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  orderId         String   @unique
   paymentId       String?
-  amount          Int           @default(19900) // ₹199 in paise
-  currency        String        @default("INR")
-  gateway         String        @default("EASEBUZZ")
-  status          PaymentStatus @default(PENDING)
-  gatewayResponse String?       // Raw JSON payload string
+  amount          Int      @default(19900)
+  currency        String   @default("INR")
+  gateway         String   @default("CASHFREE")
+  status          String   @default("PENDING")
+  gatewayResponse String?
   paidAt          DateTime?
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   @@index([customerId])
   @@index([orderId])
@@ -84,16 +58,16 @@ model Payment {
 }
 
 model WhatsAppMessage {
-  id                String              @id @default(cuid())
+  id                String   @id @default(cuid())
   customerId        String
-  customer          Customer            @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  messageType       WhatsAppMessageType
+  customer          Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  messageType       String
   recipient         String
   message           String
   providerMessageId String?
-  status            String              @default("SENT")
-  sentAt            DateTime            @default(now())
-  createdAt         DateTime            @default(now())
+  status            String   @default("SENT")
+  sentAt            DateTime @default(now())
+  createdAt         DateTime @default(now())
 
   @@index([customerId])
   @@map("whatsapp_messages")
